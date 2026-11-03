@@ -49,6 +49,16 @@ data/wechat_session.json
 
 docs/_posts/*.md
 
+# Personal notes and local experiments
+log.md
+log2.md
+11月*.md
+部署
+
+# GitHub Actions runner persistence
+data/.last-run.json
+data/burst-seen.json
+
 # Logs
 logs/*.log
 *.log
