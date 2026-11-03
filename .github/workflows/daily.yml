@@ -27,11 +27,20 @@ jobs:
         run: |
           docker build -t horizon:daily .
 
+      - name: Check secrets
+        run: |
+          [ -n "${{ secrets.GROQ_API_KEY }}" ] && echo "GROQ_API_KEY=set" || echo "GROQ_API_KEY=MISSING"
+          [ -n "${{ secrets.PUSHPLUS_TOKEN }}" ] && echo "PUSHPLUS_TOKEN=set" || echo "PUSHPLUS_TOKEN=MISSING"
+          [ -n "${{ secrets.WECOM_WEBHOOK }}" ] && echo "WECOM_WEBHOOK=set" || echo "WECOM_WEBHOOK=MISSING"
+
       - name: Run Horizon daily (12h window, threshold 5.5)
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           TZ: Asia/Shanghai
         run: |
+          # Container runs as uid 10001; the checkout dir belongs to the runner.
+          sudo chown -R 10001:10001 data profiles
+          mkdir -p data/summaries
           docker run --rm \
             -v "$(pwd)/data:/app/data" \
             -v "$(pwd)/profiles:/app/profiles" \
