@@ -25,7 +25,10 @@
     "icon_style": "emoji"
   },
   "email": {
-    "enabled": false
+    "enabled": false,
+    "imap_server": "",
+    "smtp_server": "",
+    "email_address": ""
   },
   "sources": {
     "github": [],
