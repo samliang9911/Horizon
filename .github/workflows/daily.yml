@@ -25,8 +25,7 @@ jobs:
 
       - name: Build Horizon image
         run: |
-          docker build -t horizon:daily \
-            --build-arg EXTRAS=trafilatura .
+          docker build -t horizon:daily .
 
       - name: Run Horizon daily (12h window, threshold 5.5)
         env:
@@ -39,7 +38,7 @@ jobs:
             -e TZ=Asia/Shanghai \
             -e GROQ_API_KEY \
             horizon:daily \
-            -c /app/data/config.json \
+            -c /app/data/config.actions.json \
             --hours 12
 
       - name: Notify PushPlus + WeCom

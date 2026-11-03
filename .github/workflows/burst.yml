@@ -24,8 +24,7 @@ jobs:
 
       - name: Build Horizon image
         run: |
-          docker build -t horizon:burst \
-            --build-arg EXTRAS=trafilatura .
+          docker build -t horizon:burst .
 
       - name: Run Horizon burst (2h window, threshold 8)
         env:
