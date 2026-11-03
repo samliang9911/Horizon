@@ -1,0 +1,64 @@
+{
+  "ai": {
+    "provider": "openai",
+    "model": "llama-3.3-70b-versatile",
+    "base_url": "https://api.groq.com/openai/v1",
+    "api_key_env": "GROQ_API_KEY",
+    "temperature": 0.2,
+    "max_tokens": 4096,
+    "throttle_sec": 0,
+    "analysis_concurrency": 2,
+    "enrichment_concurrency": 1,
+    "languages": ["zh"]
+  },
+  "processing": {
+    "profiles_dir": "profiles",
+    "default_profile": "tech-news",
+    "profile_settings": {
+      "tech-news": {
+        "threshold": 8.0,
+        "topic_dedup": true
+      }
+    }
+  },
+  "display": {
+    "icon_style": "emoji"
+  },
+  "email": {
+    "enabled": false
+  },
+  "sources": {
+    "github": [],
+    "hackernews": { "enabled": false },
+    "rss": [
+      { "name": "BBC 中文网", "url": "https://feeds.bbci.co.uk/zhongwen/simp/rss.xml", "enabled": true, "category": "current-affairs-zh", "profile": "tech-news", "content_extractor": "trafilatura" },
+      { "name": "纽约时报中文网", "url": "https://cn.nytimes.com/rss/", "enabled": true, "category": "current-affairs-zh", "profile": "tech-news", "content_extractor": "trafilatura" },
+      { "name": "The Guardian World", "url": "https://www.theguardian.com/world/rss", "enabled": true, "category": "current-affairs", "profile": "tech-news", "content_extractor": "trafilatura" },
+      { "name": "Al Jazeera English", "url": "https://www.aljazeera.com/xml/rss/all.xml", "enabled": true, "category": "current-affairs", "profile": "tech-news", "content_extractor": "trafilatura" },
+      { "name": "Google News World", "url": "https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-US&gl=US&ceid=US:en", "enabled": true, "category": "current-affairs", "profile": "tech-news" },
+      { "name": "Defense News", "url": "https://www.defensenews.com/arc/outboundfeeds/rss/?outputType=xml", "enabled": true, "category": "defense", "profile": "tech-news", "content_extractor": "trafilatura" },
+      { "name": "Times of Israel", "url": "https://www.timesofisrael.com/feed/", "enabled": true, "category": "middle-east", "profile": "tech-news", "content_extractor": "trafilatura" },
+      { "name": "Middle East Eye", "url": "https://www.middleeasteye.net/rss/news", "enabled": true, "category": "middle-east", "profile": "tech-news", "content_extractor": "trafilatura" },
+      { "name": "Moscow Times", "url": "https://www.themoscowtimes.com/rss/news", "enabled": true, "category": "russia-ukraine", "profile": "tech-news", "content_extractor": "trafilatura" },
+      { "name": "Ukrainska Pravda", "url": "https://www.pravda.com.ua/rss/news", "enabled": true, "category": "russia-ukraine", "profile": "tech-news" },
+      { "name": "CNA Asia", "url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511", "enabled": true, "category": "southeast-asia", "profile": "tech-news", "content_extractor": "trafilatura" },
+      { "name": "Bellingcat", "url": "https://www.bellingcat.com/feed/", "enabled": true, "category": "osint", "profile": "tech-news", "content_extractor": "trafilatura" }
+    ],
+    "reddit": { "enabled": false, "subreddits": [], "users": [] },
+    "twitter": { "enabled": false },
+    "openbb": { "enabled": false, "watchlists": [] },
+    "ossinsight": { "enabled": false },
+    "telegram": { "enabled": false, "channels": [] },
+    "gdelt": { "enabled": false },
+    "google_news": { "enabled": false }
+  },
+  "collection": { "time_window_hours": 24 },
+  "digest": {
+    "max_items": null,
+    "profile_order": ["tech-news"],
+    "category_groups": {},
+    "default_group": "other"
+  },
+  "webhook": { "enabled": false },
+  "wechat": { "enabled": false }
+}
