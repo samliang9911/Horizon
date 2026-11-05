@@ -34,6 +34,7 @@ jobs:
           # Container runs as uid 10001; the checkout dir belongs to the runner.
           sudo chown -R 10001:10001 data profiles
           mkdir -p data/summaries
+          set +e
           docker run --rm \
             -v "$(pwd)/data:/app/data" \
             -v "$(pwd)/profiles:/app/profiles" \
@@ -41,7 +42,15 @@ jobs:
             -e GROQ_API_KEY \
             horizon:burst \
             -c /app/data/config-burst.json \
-            --hours 2
+            --hours 2 2>&1 | tee horizon-run.log
+          rc=${PIPESTATUS[0]}
+          {
+            echo "### Horizon burst (exit=$rc)"
+            echo '```'
+            tail -n 60 horizon-run.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
 
       - name: Notify PushPlus + WeCom
         if: always()
@@ -50,6 +59,9 @@ jobs:
           WECOM_WEBHOOK: ${{ secrets.WECOM_WEBHOOK }}
         run: |
           chmod +x scripts/push.sh
-          ZH=$(ls -t data/summaries/horizon-*-zh.md 2>/dev/null | head -n1)
-          EN=$(ls -t data/summaries/horizon-*-en.md 2>/dev/null | head -n1)
+          TODAY=$(TZ=Asia/Shanghai date +%F)
+          ZH="data/summaries/horizon-${TODAY}-zh.md"
+          EN="data/summaries/horizon-${TODAY}-en.md"
+          [ -f "$ZH" ] || ZH=""
+          [ -f "$EN" ] || EN=""
           ./scripts/push.sh burst "$ZH" "$EN" || true

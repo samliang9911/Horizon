@@ -28,10 +28,17 @@ jobs:
           docker build -t horizon:daily .
 
       - name: Check secrets
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+          WECOM_WEBHOOK: ${{ secrets.WECOM_WEBHOOK }}
         run: |
-          [ -n "${{ secrets.GROQ_API_KEY }}" ] && echo "GROQ_API_KEY=set" || echo "GROQ_API_KEY=MISSING"
-          [ -n "${{ secrets.PUSHPLUS_TOKEN }}" ] && echo "PUSHPLUS_TOKEN=set" || echo "PUSHPLUS_TOKEN=MISSING"
-          [ -n "${{ secrets.WECOM_WEBHOOK }}" ] && echo "WECOM_WEBHOOK=set" || echo "WECOM_WEBHOOK=MISSING"
+          {
+            echo "### Secrets"
+            echo "- GROQ_API_KEY: $( [ -n "$GROQ_API_KEY" ] && echo set || echo MISSING )"
+            echo "- PUSHPLUS_TOKEN: $( [ -n "$PUSHPLUS_TOKEN" ] && echo set || echo MISSING )"
+            echo "- WECOM_WEBHOOK: $( [ -n "$WECOM_WEBHOOK" ] && echo set || echo MISSING )"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run Horizon daily (12h window, threshold 5.5)
         env:
@@ -41,6 +48,7 @@ jobs:
           # Container runs as uid 10001; the checkout dir belongs to the runner.
           sudo chown -R 10001:10001 data profiles
           mkdir -p data/summaries
+          set +e
           docker run --rm \
             -v "$(pwd)/data:/app/data" \
             -v "$(pwd)/profiles:/app/profiles" \
@@ -48,7 +56,15 @@ jobs:
             -e GROQ_API_KEY \
             horizon:daily \
             -c /app/data/config.actions.json \
-            --hours 12
+            --hours 12 2>&1 | tee horizon-run.log
+          rc=${PIPESTATUS[0]}
+          {
+            echo "### Horizon run (exit=$rc)"
+            echo '```'
+            tail -n 60 horizon-run.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
 
       - name: Notify PushPlus + WeCom
         if: always()
@@ -57,6 +73,9 @@ jobs:
           WECOM_WEBHOOK: ${{ secrets.WECOM_WEBHOOK }}
         run: |
           chmod +x scripts/push.sh
-          ZH=$(ls -t data/summaries/horizon-*-zh.md 2>/dev/null | head -n1)
-          EN=$(ls -t data/summaries/horizon-*-en.md 2>/dev/null | head -n1)
+          TODAY=$(TZ=Asia/Shanghai date +%F)
+          ZH="data/summaries/horizon-${TODAY}-zh.md"
+          EN="data/summaries/horizon-${TODAY}-en.md"
+          [ -f "$ZH" ] || ZH=""
+          [ -f "$EN" ] || EN=""
           ./scripts/push.sh daily "$ZH" "$EN" || true
