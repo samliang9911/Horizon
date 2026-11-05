@@ -41,30 +41,37 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run Horizon daily (12h window, threshold 5.5)
+        id: run
+        continue-on-error: true
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           TZ: Asia/Shanghai
         run: |
-          # Container runs as uid 10001; the checkout dir belongs to the runner.
-          sudo chown -R 10001:10001 data profiles
-          mkdir -p data/summaries
-          set +e
-          docker run --rm \
-            -v "$(pwd)/data:/app/data" \
-            -v "$(pwd)/profiles:/app/profiles" \
-            -e TZ=Asia/Shanghai \
-            -e GROQ_API_KEY \
-            horizon:daily \
-            -c /app/data/config.actions.json \
-            --hours 12 2>&1 | tee horizon-run.log
-          rc=${PIPESTATUS[0]}
           {
-            echo "### Horizon run (exit=$rc)"
+            set -x
+            id
+            sudo chown -R 10001:10001 data profiles
+            mkdir -p data/summaries
+            docker run --rm \
+              -v "$(pwd)/data:/app/data" \
+              -v "$(pwd)/profiles:/app/profiles" \
+              -e TZ=Asia/Shanghai \
+              -e GROQ_API_KEY \
+              horizon:daily \
+              -c /app/data/config.actions.json \
+              --hours 12
+          } 2>&1 | tee horizon-run.log
+
+      - name: Publish diagnostics
+        if: always()
+        run: |
+          {
+            echo "### Horizon run outcome: ${{ steps.run.outcome }}"
             echo '```'
-            tail -n 60 horizon-run.log
+            tail -n 80 horizon-run.log 2>/dev/null || echo "(no log captured)"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          exit $rc
+          [ "${{ steps.run.outcome }}" = "success" ] || exit 1
 
       - name: Notify PushPlus + WeCom
         if: always()
