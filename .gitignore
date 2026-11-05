@@ -73,3 +73,7 @@ logs/*.log
 todo.txt
 .ruff_cache
 .pytest_cache
+
+# Local notes (kept on disk, not tracked)
+.gitignore copy
+军情D7处_新闻来源整理.md
