@@ -53,32 +53,40 @@ WECOM_BODY="$(echo "$BODY" \
 # --- PushPlus ---------------------------------------------------------------
 if [ -n "$PUSHPLUS_TOKEN" ]; then
   echo "[push] Sending via PushPlus..."
-  curl -fsS -G "http://www.pushplus.plus/send" \
+  pp_resp=$(curl -fsS -G "http://www.pushplus.plus/send" \
     --data-urlencode "token=${PUSHPLUS_TOKEN}" \
     --data-urlencode "title=${TITLE}" \
     --data-urlencode "content=${BODY}" \
     --data-urlencode "template=html" \
-    --data-urlencode "timestamp=$(date +%s)" > /dev/null \
-    && echo "[push] PushPlus OK" \
-    || echo "[push] PushPlus FAILED (continuing)"
+    --data-urlencode "timestamp=$(date +%s)" 2>&1) || true
+  pp_code=$(echo "$pp_resp" | python3 -c "import json,sys;print(json.loads(sys.stdin.read()).get('code','?'))" 2>/dev/null || echo "ERR")
+  pp_msg=$(echo "$pp_resp" | python3 -c "import json,sys;print(json.loads(sys.stdin.read()).get('msg',''))" 2>/dev/null || echo "")
+  echo "[push] PushPlus code=$pp_code msg=$pp_msg"
+  if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+    echo "- PushPlus: code=$pp_code msg=$pp_msg" >> "$GITHUB_STEP_SUMMARY"
+  fi
 fi
 
 # --- WeCom Bot (fallback) ---------------------------------------------------
 if [ -n "$WECOM_WEBHOOK" ]; then
   echo "[push] Sending via WeCom bot..."
-  # WeCom requires a JSON POST with markdown body
   WECOM_PAYLOAD="$(python3 -c "
-import json, sys
+import json
 print(json.dumps({
   'msgtype': 'markdown',
-  'markdown': {'content': '''## ${TITLE}\n${WECOM_BODY}'''}
+  'markdown': {'content': '''## ${TITLE}
+${WECOM_BODY}'''}
 }))
 ")"
-  curl -fsS -X POST "${WECOM_WEBHOOK}" \
+  wc_resp=$(curl -fsS -X POST "${WECOM_WEBHOOK}" \
     -H "Content-Type: application/json" \
-    -d "${WECOM_PAYLOAD}" > /dev/null \
-    && echo "[push] WeCom OK" \
-    || echo "[push] WeCom FAILED (non-fatal)"
+    -d "${WECOM_PAYLOAD}" 2>&1) || true
+  wc_code=$(echo "$wc_resp" | python3 -c "import json,sys;print(json.loads(sys.stdin.read()).get('errcode','?'))" 2>/dev/null || echo "ERR")
+  wc_msg=$(echo "$wc_resp" | python3 -c "import json,sys;print(json.loads(sys.stdin.read()).get('errmsg',''))" 2>/dev/null || echo "")
+  echo "[push] WeCom errcode=$wc_code errmsg=$wc_msg"
+  if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+    echo "- WeCom: errcode=$wc_code errmsg=$wc_msg" >> "$GITHUB_STEP_SUMMARY"
+  fi
 fi
 
 echo "[push] Done (${MODE})."

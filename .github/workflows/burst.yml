@@ -66,9 +66,10 @@ jobs:
           WECOM_WEBHOOK: ${{ secrets.WECOM_WEBHOOK }}
         run: |
           chmod +x scripts/push.sh
-          TODAY=$(TZ=Asia/Shanghai date +%F)
-          ZH="data/summaries/horizon-${TODAY}-zh.md"
-          EN="data/summaries/horizon-${TODAY}-en.md"
-          [ -f "$ZH" ] || ZH=""
-          [ -f "$EN" ] || EN=""
+          ZH=$(find data/summaries -maxdepth 1 -name 'horizon-*-zh.md' -printf '%T@ %p\n' 2>/dev/null \
+               | sort -rn | head -n1 | cut -d' ' -f2-)
+          EN=$(find data/summaries -maxdepth 1 -name 'horizon-*-en.md' -printf '%T@ %p\n' 2>/dev/null \
+               | sort -rn | head -n1 | cut -d' ' -f2-)
+          echo "Selected ZH=$ZH"
+          echo "Selected EN=$EN"
           ./scripts/push.sh burst "$ZH" "$EN" || true
